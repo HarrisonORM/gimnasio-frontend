@@ -1,0 +1,9 @@
+type nul > .gitignore
+```
+
+Abre el `.gitignore` y pega:
+```
+node_modules/
+dist/
+.env
+.env.local
