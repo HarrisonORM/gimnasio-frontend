@@ -9,9 +9,9 @@ import Acceso from './pages/Acceso'
 
 function Layout({ children }) {
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen" style={{ background: '#0a0a0a' }}>
       <Navbar />
-      <main className="max-w-7xl mx-auto p-6">
+      <main className="p-6">
         {children}
       </main>
     </div>
