@@ -25,11 +25,9 @@ const IconBorrar = () => (
   </svg>
 )
 
-function ResultadoOverlay({ estado, resultado }) {
+function ResultadoOverlay({ estado }) {
   if (estado === 'esperando') return null
-
   const permitido = estado === 'permitido'
-
   return (
     <div
       className="absolute inset-0 flex flex-col items-center justify-center"
@@ -75,7 +73,6 @@ function TecladoNumerico({ cedula, onChange, onConfirmar, onBorrar, cargando }) 
           Ingreso por cédula
         </p>
 
-        {/* Display de cédula */}
         <div
           className="rounded-xl px-4 py-3 text-center font-ubuntuc text-2xl tracking-widest mb-4"
           style={{
@@ -88,7 +85,6 @@ function TecladoNumerico({ cedula, onChange, onConfirmar, onBorrar, cargando }) 
           {cedula || '_ _ _ _ _ _ _ _ _ _'}
         </div>
 
-        {/* Teclado */}
         <div className="grid grid-cols-3 gap-2">
           {teclas.map((tecla) => (
             <button
@@ -126,7 +122,9 @@ function TecladoNumerico({ cedula, onChange, onConfirmar, onBorrar, cargando }) 
                 }
               }}
             >
-              {tecla === 'C' ? <span className="flex items-center justify-center"><IconBorrar /></span> : tecla}
+              {tecla === 'C'
+                ? <span className="flex items-center justify-center"><IconBorrar /></span>
+                : tecla}
             </button>
           ))}
         </div>
@@ -151,7 +149,6 @@ function Acceso() {
     setResultado(data)
     setEstado(data.permitido ? 'permitido' : 'denegado')
     cooldownRef.current = true
-
     setTimeout(() => {
       setEstado('esperando')
       setResultado(null)
@@ -160,18 +157,11 @@ function Acceso() {
   }, [])
 
   const capturarYValidar = useCallback(async () => {
-    if (
-      !webcamRef.current ||
-      cooldownRef.current ||
-      procesando ||
-      !camaraActiva
-    ) return
-
+    if (!webcamRef.current || cooldownRef.current || procesando || !camaraActiva) return
     const imageSrc = webcamRef.current.getScreenshot()
     if (!imageSrc) return
 
     setProcesando(true)
-
     try {
       const blob = await fetch(imageSrc).then(r => r.blob())
       const formData = new FormData()
@@ -213,7 +203,6 @@ function Acceso() {
     intervaloRef.current = setInterval(() => {
       capturarYValidar()
     }, 2500)
-
     return () => {
       if (intervaloRef.current) clearInterval(intervaloRef.current)
     }
@@ -290,7 +279,7 @@ function Acceso() {
                 style={{ display: 'block' }}
               />
 
-              <ResultadoOverlay estado={estado} resultado={resultado} />
+              <ResultadoOverlay estado={estado} />
 
               {/* Marco de detección */}
               <div
@@ -328,34 +317,65 @@ function Acceso() {
             </div>
 
             {/* Estado resultado */}
-            <div className="px-6 py-4">
-              {estado === 'esperando' ? (
-                <p className="font-ubuntu text-sm text-center" style={{ color: '#444' }}>
+            <div className="px-6 py-5 text-center">
+              {estado === 'esperando' && (
+                <p className="font-ubuntu text-sm" style={{ color: '#444' }}>
                   {camaraActiva
                     ? 'Posiciona tu rostro frente a la cámara'
                     : 'Esperando acceso a la cámara...'}
                 </p>
-              ) : (
-                <div className="text-center">
-                  <p
-                    className="font-ubuntuc text-2xl"
-                    style={{ color: colorEstado }}
-                  >
-                    {estado === 'permitido' ? 'ACCESO PERMITIDO' : 'ACCESO DENEGADO'}
+              )}
+
+              {estado === 'permitido' && resultado && (
+                <div>
+                  <p className="font-ubuntu text-sm mb-1" style={{ color: '#00c878' }}>
+                    {resultado.mensaje_bienvenida || 'Bienvenido a EVOGYM'}
                   </p>
-                  {resultado?.usuario && (
-                    <p className="font-ubuntu text-white mt-1">
+                  <p className="font-ubuntuc text-2xl mb-1" style={{ color: '#00c878' }}>
+                    ACCESO PERMITIDO
+                  </p>
+                  {resultado.usuario && (
+                    <p className="font-ubuntu text-lg text-white mb-2">
                       {resultado.usuario.nombre} {resultado.usuario.apellido}
                     </p>
                   )}
-                  <p className="font-ubuntu text-xs mt-1" style={{ color: '#555' }}>
-                    {resultado?.mensaje}
+                  <p className="font-ubuntu text-sm" style={{ color: '#555' }}>
+                    {resultado.mensaje}
                   </p>
-                  {resultado?.entradas_restantes !== undefined && (
-                    <p className="font-ubuntu text-xs mt-1" style={{ color: '#3b82f6' }}>
-                      Entradas restantes: {resultado.entradas_restantes}
+                  {resultado.entradas_restantes !== undefined && (
+                    <div
+                      className="mt-2 px-4 py-1 rounded-full inline-block"
+                      style={{ background: '#3b82f615', border: '1px solid #3b82f630' }}
+                    >
+                      <p className="font-ubuntu text-xs" style={{ color: '#3b82f6' }}>
+                        {resultado.entradas_restantes} entradas restantes
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {estado === 'denegado' && (
+                <div>
+                  <p className="font-ubuntuc text-2xl mb-1" style={{ color: '#ef4444' }}>
+                    ACCESO DENEGADO
+                  </p>
+                  {resultado?.usuario && (
+                    <p className="font-ubuntu text-lg text-white mb-2">
+                      {resultado.usuario.nombre} {resultado.usuario.apellido}
                     </p>
                   )}
+                  <p className="font-ubuntu text-sm" style={{ color: '#555' }}>
+                    {resultado?.mensaje || 'No tienes membresía activa'}
+                  </p>
+                  <div
+                    className="mt-2 px-4 py-1 rounded-full inline-block"
+                    style={{ background: '#ef444415', border: '1px solid #ef444430' }}
+                  >
+                    <p className="font-ubuntu text-xs" style={{ color: '#ef4444' }}>
+                      Dirígete a recepción para renovar tu plan
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
@@ -363,8 +383,6 @@ function Acceso() {
 
           {/* Panel derecho — Teclado */}
           <div className="space-y-4">
-
-            {/* Teclado numérico */}
             <div
               className="rounded-2xl p-6"
               style={{
@@ -381,7 +399,6 @@ function Acceso() {
                 cargando={cargandoCedula}
               />
 
-              {/* Resultado cédula */}
               {cargandoCedula && (
                 <div className="mt-4 text-center">
                   <p className="font-ubuntu text-sm" style={{ color: '#00c878' }}>
@@ -407,7 +424,7 @@ function Acceso() {
                 {[
                   'La cámara te identifica automáticamente',
                   'Mira directamente a la cámara al llegar',
-                  'Si la cámara falla, usa el teclado de cédula',
+                  'Si la cámara falla usa el teclado de cédula',
                   'Espera el resultado antes de pasar'
                 ].map((inst, i) => (
                   <div key={i} className="flex items-center gap-3">
@@ -422,11 +439,9 @@ function Acceso() {
                 ))}
               </div>
             </div>
-
           </div>
         </div>
       </div>
-
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   )

@@ -198,7 +198,9 @@ function Dashboard() {
                                         style={{ background: '#0d0d0d', border: '1px solid #1f1f1f' }}
                                     >
                                         <div>
-                                            <p className="font-ubuntu text-white text-sm">Usuario #{alerta.usuario_id}</p>
+                                            <p className="font-ubuntu text-sm text-white">
+                                                {alerta.nombre_completo}
+                                            </p>
                                             <p className="font-ubuntu text-xs mt-0.5" style={{ color: '#444' }}>
                                                 Vence: {new Date(alerta.fecha_fin).toLocaleDateString('es-CO')}
                                             </p>
@@ -247,7 +249,9 @@ function Dashboard() {
                                         style={{ background: '#0d0d0d', border: '1px solid #1f1f1f' }}
                                     >
                                         <div>
-                                            <p className="font-ubuntu text-white text-sm">Usuario #{ingreso.usuario_id}</p>
+                                            <p className="font-ubuntu text-sm text-white">
+                                                {ingreso.nombre_completo}
+                                            </p>
                                             <p className="font-ubuntu text-xs mt-0.5" style={{ color: '#444' }}>
                                                 {new Date(ingreso.fecha_hora).toLocaleTimeString('es-CO')}
                                                 {ingreso.tipo_acceso && ` · ${ingreso.tipo_acceso}`}
