@@ -1,45 +1,46 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import Webcam from 'react-webcam'
 import api from '../services/api'
 
 const IconUsuario = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-    <circle cx="12" cy="7" r="4"/>
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
   </svg>
 )
 
 const IconBuscar = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-    <circle cx="11" cy="11" r="8"/>
-    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    <circle cx="11" cy="11" r="8" />
+    <line x1="21" y1="21" x2="16.65" y2="16.65" />
   </svg>
 )
 
 const IconCerrar = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-    <line x1="18" y1="6" x2="6" y2="18"/>
-    <line x1="6" y1="6" x2="18" y2="18"/>
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
   </svg>
 )
 
 const IconEditar = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
   </svg>
 )
 
 const IconVer = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-    <circle cx="12" cy="12" r="3"/>
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+    <circle cx="12" cy="12" r="3" />
   </svg>
 )
 
 const IconMas = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <line x1="12" y1="5" x2="12" y2="19"/>
-    <line x1="5" y1="12" x2="19" y2="12"/>
+    <line x1="12" y1="5" x2="12" y2="19" />
+    <line x1="5" y1="12" x2="19" y2="12" />
   </svg>
 )
 
@@ -283,12 +284,25 @@ function PanelDetalle({ usuario, onCerrar, onRenovar }) {
 }
 
 function ModalNuevoUsuario({ onCerrar, onCreado, planes }) {
+  const webcamRef = useRef(null)
   const [form, setForm] = useState({
-    nombre: '', apellido: '', email: '', telefono: ''
+    nombre: '', apellido: '', email: '', telefono: '', cedula: ''
   })
   const [planId, setPlanId] = useState('')
+  const [fotoCapturada, setFotoCapturada] = useState(null)
+  const [camaraActiva, setCamaraActiva] = useState(false)
+  const [mostrarCamara, setMostrarCamara] = useState(false)
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState('')
+
+  const capturarFoto = useCallback(() => {
+    if (!webcamRef.current) return
+    const foto = webcamRef.current.getScreenshot()
+    if (foto) {
+      setFotoCapturada(foto)
+      setMostrarCamara(false)
+    }
+  }, [webcamRef])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -306,6 +320,16 @@ function ModalNuevoUsuario({ onCerrar, onCreado, planes }) {
           await api.post(`/usuarios/${usuarioId}/membresia`, { plan_id: parseInt(planId) })
         }
       }
+
+      if (fotoCapturada) {
+        const blob = await fetch(fotoCapturada).then(r => r.blob())
+        const formData = new FormData()
+        formData.append('file', blob, 'foto.jpg')
+        await api.post(`/facial/registrar/${usuarioId}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        })
+      }
+
       onCreado()
       onCerrar()
     } catch (err) {
@@ -330,11 +354,15 @@ function ModalNuevoUsuario({ onCerrar, onCreado, planes }) {
   return (
     <div
       className="fixed inset-0 flex items-center justify-center"
-      style={{ background: 'rgba(0,0,0,0.8)', zIndex: 100 }}
+      style={{ background: 'rgba(0,0,0,0.85)', zIndex: 100 }}
     >
       <div
-        className="w-full max-w-md rounded-2xl p-8"
-        style={{ background: '#111', border: '1px solid #1a1a1a' }}
+        className="w-full max-w-lg rounded-2xl p-8 overflow-y-auto"
+        style={{
+          background: '#111',
+          border: '1px solid #1a1a1a',
+          maxHeight: '90vh'
+        }}
       >
         <div className="flex items-center justify-between mb-6">
           <h2 className="font-ubuntuc text-2xl" style={{ color: '#00c878' }}>
@@ -346,6 +374,8 @@ function ModalNuevoUsuario({ onCerrar, onCreado, planes }) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+
+          {/* Datos personales */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="font-ubuntu text-xs uppercase tracking-wider block mb-2" style={{ color: '#555' }}>
@@ -402,6 +432,19 @@ function ModalNuevoUsuario({ onCerrar, onCreado, planes }) {
               onBlur={e => e.target.style.borderColor = '#1f1f1f'}
             />
           </div>
+          <div>
+            <label className="font-ubuntu text-xs uppercase tracking-wider block mb-2" style={{ color: '#555' }}>
+              Número de Cédula
+            </label>
+            <input
+              style={inputStyle}
+              value={form.cedula}
+              onChange={e => setForm({ ...form, cedula: e.target.value })}
+              placeholder="Ej: 1234567890"
+              onFocus={e => e.target.style.borderColor = '#00c878'}
+              onBlur={e => e.target.style.borderColor = '#1f1f1f'}
+            />
+          </div>
 
           <div>
             <label className="font-ubuntu text-xs uppercase tracking-wider block mb-2" style={{ color: '#555' }}>
@@ -421,6 +464,99 @@ function ModalNuevoUsuario({ onCerrar, onCreado, planes }) {
                 </option>
               ))}
             </select>
+          </div>
+
+          {/* Sección de foto */}
+          <div>
+            <label className="font-ubuntu text-xs uppercase tracking-wider block mb-2" style={{ color: '#555' }}>
+              Foto para reconocimiento facial
+            </label>
+
+            {/* Foto capturada */}
+            {fotoCapturada && !mostrarCamara && (
+              <div className="relative rounded-xl overflow-hidden mb-3" style={{ aspectRatio: '4/3' }}>
+                <img
+                  src={fotoCapturada}
+                  alt="Foto capturada"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 flex items-end justify-center pb-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFotoCapturada(null)
+                      setMostrarCamara(true)
+                    }}
+                    className="font-ubuntu text-xs px-4 py-2 rounded-xl"
+                    style={{ background: 'rgba(0,0,0,0.7)', color: '#00c878', border: '1px solid #00c87840' }}
+                  >
+                    Tomar otra foto
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Cámara activa */}
+            {mostrarCamara && (
+              <div className="rounded-xl overflow-hidden mb-3" style={{ aspectRatio: '4/3', background: '#000' }}>
+                <Webcam
+                  ref={webcamRef}
+                  screenshotFormat="image/jpeg"
+                  screenshotQuality={0.9}
+                  className="w-full h-full object-cover"
+                  onUserMedia={() => setCamaraActiva(true)}
+                  onUserMediaError={() => setCamaraActiva(false)}
+                />
+              </div>
+            )}
+
+            {/* Botones de cámara */}
+            {!fotoCapturada && !mostrarCamara && (
+              <button
+                type="button"
+                onClick={() => setMostrarCamara(true)}
+                className="w-full font-ubuntu text-sm py-3 rounded-xl transition-all duration-200"
+                style={{
+                  background: '#0d0d0d',
+                  border: '1px dashed #00c87840',
+                  color: '#00c878'
+                }}
+              >
+                Activar cámara para capturar foto
+              </button>
+            )}
+
+            {mostrarCamara && (
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={capturarFoto}
+                  disabled={!camaraActiva}
+                  className="flex-1 font-ubuntuc tracking-wider py-3 rounded-xl transition-all duration-200"
+                  style={{
+                    background: camaraActiva ? '#00c878' : '#1a1a1a',
+                    color: camaraActiva ? '#000' : '#555',
+                    fontSize: '15px'
+                  }}
+                >
+                  CAPTURAR
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMostrarCamara(false)}
+                  className="px-4 py-3 rounded-xl transition-all duration-200"
+                  style={{ background: '#0d0d0d', color: '#555', border: '1px solid #1f1f1f' }}
+                >
+                  Cancelar
+                </button>
+              </div>
+            )}
+
+            {!fotoCapturada && (
+              <p className="font-ubuntu text-xs mt-2" style={{ color: '#333' }}>
+                Opcional — si no capturas foto ahora puedes registrarla después
+              </p>
+            )}
           </div>
 
           {error && (
@@ -445,6 +581,7 @@ function ModalNuevoUsuario({ onCerrar, onCreado, planes }) {
           >
             {cargando ? 'Registrando...' : 'REGISTRAR'}
           </button>
+
         </form>
       </div>
     </div>
@@ -566,13 +703,13 @@ function Usuarios() {
         api.get('/usuarios/'),
         api.get('/planes')
       ])
-      
+
       const usuariosConDetalle = await Promise.all(
         usuariosRes.data.map(async (u) => {
           let membresia = null
           let tiquetera = null
-          try { membresia = (await api.get(`/usuarios/${u.id}/membresia`)).data } catch {}
-          try { tiquetera = (await api.get(`/usuarios/${u.id}/tiquetera`)).data } catch {}
+          try { membresia = (await api.get(`/usuarios/${u.id}/membresia`)).data } catch { }
+          try { tiquetera = (await api.get(`/usuarios/${u.id}/tiquetera`)).data } catch { }
           return { ...u, membresia, tiquetera }
         })
       )
@@ -672,9 +809,9 @@ function Usuarios() {
               }}
             >
               {f === 'todos' ? 'Todos' :
-               f === 'activos' ? 'Activos' :
-               f === 'vencidos' ? 'Vencidos' :
-               f === 'tiquetera' ? 'Tiquetera' : 'Sin plan'}
+                f === 'activos' ? 'Activos' :
+                  f === 'vencidos' ? 'Vencidos' :
+                    f === 'tiquetera' ? 'Tiquetera' : 'Sin plan'}
             </button>
           ))}
         </div>
@@ -739,16 +876,16 @@ function Usuarios() {
                   {usuario.membresia?.activa
                     ? 'Membresía'
                     : usuario.tiquetera?.activa
-                    ? 'Tiquetera'
-                    : '—'}
+                      ? 'Tiquetera'
+                      : '—'}
                 </span>
 
                 <span className="font-ubuntu text-sm" style={{ color: '#555' }}>
                   {usuario.membresia?.activa
                     ? new Date(usuario.membresia.fecha_fin).toLocaleDateString('es-CO')
                     : usuario.tiquetera?.activa
-                    ? new Date(usuario.tiquetera.fecha_vencimiento).toLocaleDateString('es-CO')
-                    : '—'}
+                      ? new Date(usuario.tiquetera.fecha_vencimiento).toLocaleDateString('es-CO')
+                      : '—'}
                 </span>
 
                 <div className="flex gap-2">
