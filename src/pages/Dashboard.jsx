@@ -250,7 +250,7 @@ function Dashboard() {
                                     >
                                         <div>
                                             <p className="font-ubuntu text-sm text-white">
-                                                {ingreso.nombre_completo}
+                                                {ingreso.nombre_completo || `Usuario #${ingreso.usuario_id}`}
                                             </p>
                                             <p className="font-ubuntu text-xs mt-0.5" style={{ color: '#444' }}>
                                                 {new Date(ingreso.fecha_hora).toLocaleTimeString('es-CO')}
