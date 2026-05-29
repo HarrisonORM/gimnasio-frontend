@@ -21,7 +21,10 @@ export function AuthProvider({ children }) {
     formData.append('username', username)
     formData.append('password', password)
 
-    const response = await axios.post('https://web-production-3281b.up.railway.app/auth/login', formData)
+    const response = await axios.post(
+      'https://gimnasio-backend.onrender.com/auth/login',
+      formData
+    )
     const { access_token } = response.data
     localStorage.setItem('token', access_token)
     setAdmin({ token: access_token })

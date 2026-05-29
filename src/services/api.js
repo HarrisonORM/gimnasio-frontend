@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: 'https://web-production-3281b.up.railway.app',
+  baseURL: 'https://gimnasio-backend.onrender.com',
   headers: {
     'Content-Type': 'application/json'
   }
