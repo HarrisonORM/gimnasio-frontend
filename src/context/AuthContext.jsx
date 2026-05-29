@@ -22,7 +22,7 @@ export function AuthProvider({ children }) {
     formData.append('password', password)
 
     const response = await axios.post(
-      'https://gimnasio-backend.onrender.com/auth/login',
+      'https://gimnasio-backend-xt20.onrender.com/auth/login',
       formData
     )
     const { access_token } = response.data
